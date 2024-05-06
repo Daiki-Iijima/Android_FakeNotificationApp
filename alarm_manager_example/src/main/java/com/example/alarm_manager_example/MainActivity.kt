@@ -11,10 +11,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.alarm_manager_example.ui.theme.FakeNotificationAppTheme
+import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val alarmManager = MyAlarmManager(applicationContext)
+
+        val calendar: Calendar = Calendar.getInstance().apply {
+            add(Calendar.SECOND, 10)
+        }
+        alarmManager.setAlarm(calendar.timeInMillis)
+
         setContent {
             FakeNotificationAppTheme {
                 // A surface container using the 'background' color from the theme
