@@ -21,21 +21,39 @@ class MyAlarmManager(
         get() = AlarmManagerCompat.canScheduleExactAlarms(alarmManager)
 
     fun setAlarm(triggerAtMillis: Long) {
-        //  アラーム発火時の処理をIntent化
-        val intent = Intent(context, AlarmReceiver::class.java)
+        val pendingIntent = createAlarmPendingIntent(0)
 
-        //  アプリ起動時以外からも実行される可能性があるので、IntentをPendingIntentに変換
-        val pendingIntent = PendingIntent.getBroadcast(
-            context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        AlarmManagerCompat.setExactAndAllowWhileIdle(
+            alarmManager, AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent
         )
 
         Toast.makeText(
             context, "アラーム設定", Toast.LENGTH_SHORT
         ).show()
+    }
 
-        AlarmManagerCompat.setExactAndAllowWhileIdle(
-            alarmManager, AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent
+    fun cancelAlarm() {
+        val pendingIntent = createAlarmPendingIntent(0)
+
+        alarmManager.cancel(pendingIntent)
+
+        Toast.makeText(
+            context, "アラーム解除", Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun createAlarmPendingIntent(requestCode: Int): PendingIntent {
+        //  アラーム発火時の処理をIntent化
+        val intent = Intent(context, AlarmReceiver::class.java)
+
+        //  アプリ起動時以外からも実行される可能性があるので、IntentをPendingIntentに変換
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        return pendingIntent
     }
 
 }
@@ -43,5 +61,6 @@ class MyAlarmManager(
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         Log.d("AlarmReceiver", "アラームが発火しました。")
+        Toast.makeText(context, "アラームが発火しました", Toast.LENGTH_SHORT).show()
     }
 }
