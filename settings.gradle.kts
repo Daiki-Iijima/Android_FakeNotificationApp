@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 rootProject.name = "FakeNotificationApp"
 include(":app")
 include(":alarm_manager_example")
+include(":camera_or_photo_librarys")

@@ -8,6 +8,22 @@
       <entry key="app">
         <State />
       </entry>
+      <entry key="camera_or_photo_librarys">
+        <State>
+          <runningDeviceTargetSelectedWithDropDown>
+            <Target>
+              <type value="RUNNING_DEVICE_TARGET" />
+              <deviceKey>
+                <Key>
+                  <type value="SERIAL_NUMBER" />
+                  <value value="f4c202e" />
+                </Key>
+              </deviceKey>
+            </Target>
+          </runningDeviceTargetSelectedWithDropDown>
+          <timeTargetWasSelectedWithDropDown value="2024-05-09T06:13:54.049570Z" />
+        </State>
+      </entry>
     </value>
   </component>
 </project>
