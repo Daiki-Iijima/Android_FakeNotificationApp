@@ -9,10 +9,15 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -28,29 +33,37 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import coil.compose.AsyncImage
 import com.example.fakenotificationapp.ui.theme.FakeNotificationAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        //  チャンネルは事前に作っておく
+        //  TODO : 自分で作れる設定を追加したい
+        createNotificationChannel(
+            channelID = getString(R.string.channel_id),
+            name = getString(R.string.channel_name),
+            descriptionStr = getString(R.string.channel_description)
+        )
 
         setContent {
             FakeNotificationAppTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Greeting(
-                        createNotificationChannel = ::createNotificationChannel,
                         notify = ::notify
                     )
                 }
@@ -108,13 +121,14 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun Greeting(
-    createNotificationChannel: (String, String, String) -> Unit,
     notify: (String, String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
-    var notificationChannelNameStr by remember { mutableStateOf("") }
-    var notificationChannelDescriptionStr by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    val channelID = stringResource(id = R.string.channel_id)
+
     var notificationTitleStr by remember { mutableStateOf("") }
     var notificationMessageStr by remember { mutableStateOf("") }
 
@@ -126,42 +140,6 @@ fun Greeting(
             .fillMaxSize()
             .padding(vertical = 10.dp)
     ) {
-        OutlinedTextField(
-            label = {
-                Text(text = "通知チャンネル名")
-            },
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done  //  EnterキーをDone(完了)に設定
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    keyboardController?.hide()
-                }
-            ),
-            value = notificationChannelNameStr,
-            onValueChange = {
-                notificationChannelNameStr = it
-            },
-        )
-
-        OutlinedTextField(
-            label = {
-                Text(text = "通知チャンネル説明")
-            },
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done  //  EnterキーをDone(完了)に設定
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    keyboardController?.hide()
-                }
-            ),
-            value = notificationChannelDescriptionStr,
-            onValueChange = {
-                notificationChannelDescriptionStr = it
-            },
-        )
-
         OutlinedTextField(
             label = {
                 Text(text = "通知タイトル")
@@ -200,25 +178,58 @@ fun Greeting(
         )
 
         Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            onClick = { /*TODO*/ }
+        ) {
+            Text(text = "日付設定")
+        }
+
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            onClick = { /*TODO*/ }
+        ) {
+            Text(text = "時間設定")
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+        ) {
+            AsyncImage(
+                model = "",
+                contentDescription = null,
+                modifier = Modifier.weight(1f)
+            )
+            Button(
+                onClick = { /*TODO*/ },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 20.dp)
+            ) {
+                Text(text = "アイコン設定")
+            }
+        }
+
+        Button(
             onClick = {
-                createNotificationChannel(
-                    notificationChannelNameStr,
-                    notificationChannelNameStr,
-                    notificationChannelDescriptionStr
-                )
                 notify(
-                    notificationChannelNameStr,
+                    channelID,
                     notificationTitleStr,
                     notificationMessageStr
                 )
             },
             modifier = Modifier.padding(top = 10.dp)
         ) {
-            Text(text = "通知")
+            Text(text = "開始")
         }
     }
-
-
 }
 
 @Preview(showBackground = true, showSystemUi = true)
@@ -226,8 +237,6 @@ fun Greeting(
 fun GreetingPreview() {
     FakeNotificationAppTheme {
         Greeting(
-            createNotificationChannel = { _, _, _ ->
-            },
             notify = { _, _, _ ->
             },
         )
