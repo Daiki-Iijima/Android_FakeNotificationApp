@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">camera_or_photo_library</string>
+    <string name="file_provider">com.camera_or_photo_library.file_provider</string>
+</resources>

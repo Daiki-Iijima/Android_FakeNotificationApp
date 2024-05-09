@@ -8,6 +8,9 @@
       <entry key="app">
         <State />
       </entry>
+      <entry key="camera_or_photo_library">
+        <State />
+      </entry>
       <entry key="camera_or_photo_librarys">
         <State>
           <runningDeviceTargetSelectedWithDropDown>
