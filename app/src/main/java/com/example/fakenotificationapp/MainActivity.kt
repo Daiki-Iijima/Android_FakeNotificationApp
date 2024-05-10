@@ -3,12 +3,20 @@ package com.example.fakenotificationapp
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,10 +53,40 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import coil.compose.AsyncImage
 import com.example.fakenotificationapp.ui.theme.FakeNotificationAppTheme
+import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
+    private lateinit var notifyAlarmManager: NotifyAlarmManager
+    private lateinit var exactAlarmPermissionLauncher: ActivityResultLauncher<Intent>
+
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        exactAlarmPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            //  ActivityResultは使えないので、自前のチェックを行う
+            if (notifyAlarmManager.hasPermission) {
+                Toast.makeText(
+                    this, "権限が与えられました！ありがとう！", Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    this, "権限が与えられませんでした", Toast.LENGTH_SHORT
+                ).show()
+
+                showPermissionSetting()
+            }
+        }
+
+        notifyAlarmManager = NotifyAlarmManager(
+            context = this,
+        )
+
+        if (!notifyAlarmManager.hasPermission) {
+            showPermissionSetting()
+        }
 
         //  チャンネルは事前に作っておく
         //  TODO : 自分で作れる設定を追加したい
@@ -64,11 +103,19 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Greeting(
-                        notify = ::notify
+                        notifyAlarmManager
                     )
                 }
             }
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private fun showPermissionSetting() {
+        //  アラームスケジュール設定のパーミッション設定用Intentを生成
+        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+        //  結果を受け取る前提で起動
+        exactAlarmPermissionLauncher.launch(intent)
     }
 
     private fun createNotificationChannel(
@@ -86,42 +133,12 @@ class MainActivity : ComponentActivity() {
         notificationManager.createNotificationChannel(channel)
     }
 
-    private fun notify(channelID: String, title: String, message: String) {
-        //  通知タップ時のイベント作成
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        val pendingIntent: PendingIntent =
-            PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-
-        //  通知の作成
-        val builder = NotificationCompat.Builder(this, channelID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)    //  通知がタップされると自動で通知を削除する
-
-
-        //  通知
-        with(NotificationManagerCompat.from(this)) {
-            if (ActivityCompat.checkSelfPermission(
-                    this@MainActivity,
-                    android.Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                return@with
-            }
-            notify(1, builder.build())
-        }
-    }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun Greeting(
-    notify: (String, String, String) -> Unit,
+    notifyAlarmManager: NotifyAlarmManager?,
     modifier: Modifier = Modifier
 ) {
 
@@ -131,6 +148,10 @@ fun Greeting(
 
     var notificationTitleStr by remember { mutableStateOf("") }
     var notificationMessageStr by remember { mutableStateOf("") }
+    var notifyImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    //  TODO : とりあえずURIを指定しておくが、画像選択機能を実装したら消す
+    notifyImageUri = Uri.parse("content://media/external/images/media/12345")
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -219,10 +240,15 @@ fun Greeting(
 
         Button(
             onClick = {
-                notify(
-                    channelID,
+                //  アラーム始動
+                val calendar: Calendar = Calendar.getInstance().apply {
+                    add(Calendar.SECOND, 1)
+                }
+                notifyAlarmManager?.setAlarm(
+                    calendar.timeInMillis,
                     notificationTitleStr,
-                    notificationMessageStr
+                    notificationMessageStr,
+                    notifyImageUri!!
                 )
             },
             modifier = Modifier.padding(top = 10.dp)
@@ -237,8 +263,7 @@ fun Greeting(
 fun GreetingPreview() {
     FakeNotificationAppTheme {
         Greeting(
-            notify = { _, _, _ ->
-            },
+            null
         )
     }
 }
