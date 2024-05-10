@@ -148,12 +148,19 @@ fun Greeting(
 
     var notificationTitleStr by remember { mutableStateOf("") }
     var notificationMessageStr by remember { mutableStateOf("") }
-    var notifyImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    //  TODO : とりあえずURIを指定しておくが、画像選択機能を実装したら消す
-    notifyImageUri = Uri.parse("content://media/external/images/media/12345")
+    //  写真選択画面を表示するか
+    val showBottomSelectImageScreen = remember {
+        mutableStateOf(false)
+    }
+
+    //  選ばれた画像のパス
+    val selectedPhotoDir = remember {
+        mutableStateOf<Uri?>(null)
+    }
 
     val keyboardController = LocalSoftwareKeyboardController.current
+
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -161,6 +168,11 @@ fun Greeting(
             .fillMaxSize()
             .padding(vertical = 10.dp)
     ) {
+
+        if(showBottomSelectImageScreen.value){
+            SelectOrTakePhotoBottomSheet(selectedPhotoDir)
+        }
+
         OutlinedTextField(
             label = {
                 Text(text = "通知タイトル")
@@ -224,12 +236,12 @@ fun Greeting(
                 .height(200.dp)
         ) {
             AsyncImage(
-                model = "",
+                model = selectedPhotoDir.value,
                 contentDescription = null,
                 modifier = Modifier.weight(1f)
             )
             Button(
-                onClick = { /*TODO*/ },
+                onClick = { showBottomSelectImageScreen.value = true },
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 20.dp)
@@ -248,7 +260,7 @@ fun Greeting(
                     calendar.timeInMillis,
                     notificationTitleStr,
                     notificationMessageStr,
-                    notifyImageUri!!
+                    selectedPhotoDir.value!!
                 )
             },
             modifier = Modifier.padding(top = 10.dp)

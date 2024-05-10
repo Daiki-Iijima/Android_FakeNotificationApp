@@ -103,12 +103,12 @@ class NotifyAlarmReceiver : BroadcastReceiver() {
         val imageUri = intent.getParcelableExtra("imageUri", Uri::class.java)
 
         //  TODO : デフォルト画像を用意したい
-//        val bitmap = getBitmapFromUri(context, imageUri) ?: drawableToBitmap(
-//            ContextCompat.getDrawable(
-//                context,
-//                R.drawable.ic_launcher_background
-//            )!!
-//        )
+        val bitmap = getBitmapFromUri(context, imageUri) ?: drawableToBitmap(
+            getDrawable(
+                context,
+                R.drawable.ic_launcher_background
+            )!!
+        )
 
         val pendingIntent: PendingIntent =
             PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
@@ -116,6 +116,7 @@ class NotifyAlarmReceiver : BroadcastReceiver() {
         //  通知の作成
         val builder = NotificationCompat.Builder(context, channelID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setLargeIcon(bitmap)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
