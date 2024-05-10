@@ -7,15 +7,22 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import java.io.File
@@ -49,6 +56,7 @@ fun deleteTempFile(context: Context, uri: Uri) {
 
 @Composable
 fun SelectOrTakePhotoBottomSheet(
+    onSelected: () -> Unit,
     photoDir: MutableState<Uri?>,
     modifier: Modifier = Modifier
 ) {
@@ -75,6 +83,8 @@ fun SelectOrTakePhotoBottomSheet(
                 } else {
                     photoDir.value = takePhotoDir.value
                 }
+
+                onSelected.invoke()
             }
         )
 
@@ -85,6 +95,7 @@ fun SelectOrTakePhotoBottomSheet(
                 takePhotoDir.value?.let { uri ->
                     takePictureLauncher.launch(uri)
                 }
+
             }
         }
 
@@ -92,11 +103,15 @@ fun SelectOrTakePhotoBottomSheet(
     val selectPhotoLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia()) {
             photoDir.value = it
+
+            onSelected.invoke()
         }
 
-    Column (
-        modifier = modifier
-    ){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxWidth().height(200.dp)
+    ) {
         Button(onClick = {
             //  パーミッションチェック
             if (ContextCompat.checkSelfPermission(
@@ -111,11 +126,13 @@ fun SelectOrTakePhotoBottomSheet(
                 takePhotoDir.value?.let {
                     takePictureLauncher.launch(it)
                 }
+
             }
         }) {
             Text(text = "写真を撮影")
         }
         Button(onClick = {
+
             //  画像のみを選択できるように
             val pickVisualMediaRequest = PickVisualMediaRequest
                 .Builder()
@@ -123,6 +140,7 @@ fun SelectOrTakePhotoBottomSheet(
                 .build()
 
             selectPhotoLauncher.launch(pickVisualMediaRequest)
+
         }) {
             Text(text = "写真を選択")
         }
