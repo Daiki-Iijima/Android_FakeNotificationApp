@@ -29,15 +29,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -53,6 +57,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import coil.compose.AsyncImage
 import com.example.fakenotificationapp.ui.theme.FakeNotificationAppTheme
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
@@ -135,7 +140,7 @@ class MainActivity : ComponentActivity() {
 
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun Greeting(
     notifyAlarmManager: NotifyAlarmManager?,
@@ -148,12 +153,41 @@ fun Greeting(
 
     var notificationTitleStr by remember { mutableStateOf("") }
     var notificationMessageStr by remember { mutableStateOf("") }
-    var notifyImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    //  TODO : とりあえずURIを指定しておくが、画像選択機能を実装したら消す
-    notifyImageUri = Uri.parse("content://media/external/images/media/12345")
+    val sheetState = rememberModalBottomSheetState()
+    //  シートを閉じている間待機するためのコルーチンスコープを確保
+    val scope = rememberCoroutineScope()
+
+    //  写真選択画面を表示するか
+    val showBottomSelectImageScreen = remember {
+        mutableStateOf(false)
+    }
+
+    //  選ばれた画像のパス
+    val selectedPhotoDir = remember {
+        mutableStateOf<Uri?>(null)
+    }
+
+    if (showBottomSelectImageScreen.value) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSelectImageScreen.value = false },
+            sheetState = sheetState
+        ) {
+            SelectOrTakePhotoBottomSheet(
+                onSelected = {
+                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+                        if (!sheetState.isVisible) {
+                            showBottomSelectImageScreen.value = false
+                        }
+                    }
+                },
+                photoDir = selectedPhotoDir,
+            )
+        }
+    }
 
     val keyboardController = LocalSoftwareKeyboardController.current
+
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -161,6 +195,8 @@ fun Greeting(
             .fillMaxSize()
             .padding(vertical = 10.dp)
     ) {
+
+
         OutlinedTextField(
             label = {
                 Text(text = "通知タイトル")
@@ -224,12 +260,12 @@ fun Greeting(
                 .height(200.dp)
         ) {
             AsyncImage(
-                model = "",
+                model = selectedPhotoDir.value,
                 contentDescription = null,
                 modifier = Modifier.weight(1f)
             )
             Button(
-                onClick = { /*TODO*/ },
+                onClick = { showBottomSelectImageScreen.value = true },
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 20.dp)
@@ -248,7 +284,7 @@ fun Greeting(
                     calendar.timeInMillis,
                     notificationTitleStr,
                     notificationMessageStr,
-                    notifyImageUri!!
+                    selectedPhotoDir.value!!
                 )
             },
             modifier = Modifier.padding(top = 10.dp)
