@@ -29,14 +29,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.contentColorFor
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -186,6 +192,69 @@ fun Greeting(
         }
     }
 
+    //  DatePickerの状態保持用
+    val datePickerState = rememberDatePickerState()
+    //  TimePickerの状態保持用
+    val timePickerState = rememberTimePickerState()
+
+    //  日付選択UIの表示状態
+    var showDatePicker by remember { mutableStateOf(false) }
+    //  日時選択UIの表示状態
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { /*TODO*/ },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDatePicker = false
+                    }
+                ) {
+                    Text(text = "確定")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDatePicker = false
+                    }
+                ) {
+                    Text(text = "キャンセル")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showTimePicker) {
+        TimePickerDialog(
+            onDismissRequest = { /*TODO*/ },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showTimePicker = false
+                    }
+                ) {
+                    Text(text = "確定")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showTimePicker = false
+                    }
+                ) {
+                    Text(text = "キャンセル")
+                }
+            }
+        ) {
+            TimePicker(state = timePickerState)
+        }
+    }
+
+
     val keyboardController = LocalSoftwareKeyboardController.current
 
 
@@ -238,7 +307,7 @@ fun Greeting(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 8.dp),
-            onClick = { /*TODO*/ }
+            onClick = { showDatePicker = true }
         ) {
             Text(text = "日付設定")
         }
@@ -247,7 +316,7 @@ fun Greeting(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp),
-            onClick = { /*TODO*/ }
+            onClick = { showTimePicker = true }
         ) {
             Text(text = "時間設定")
         }
@@ -276,10 +345,16 @@ fun Greeting(
 
         Button(
             onClick = {
-                //  アラーム始動
-                val calendar: Calendar = Calendar.getInstance().apply {
-                    add(Calendar.SECOND, 1)
+                val calendar = Calendar.getInstance()
+                //  日付けの設定(UTC)
+                datePickerState.selectedDateMillis?.let {
+                    calendar.timeInMillis = it
                 }
+
+                //  時間、分の設定
+                calendar.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                calendar.set(Calendar.MINUTE, timePickerState.minute)
+
                 notifyAlarmManager?.setAlarm(
                     calendar.timeInMillis,
                     notificationTitleStr,
